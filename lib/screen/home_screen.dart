@@ -9,13 +9,28 @@ import 'package:calendar_scheduler/database/drift_database.dart';
 import 'package:provider/provider.dart';  // ➊ Provider 불러오기
 import 'package:calendar_scheduler/provider/schedule_provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget{
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   DateTime selectedDate = DateTime.utc(
     // ➋ 선택된 날짜를 관리할 변수
     DateTime.now().year,
     DateTime.now().month,
     DateTime.now().day,
   );
+
+  @override
+  void initState() {
+    super.initState();
+
+    //HomeScreen 위젯이 생성되면 오늘 날짜의 일정을 바로 요청한다
+    context.read<ScheduleProvider>().getSchedules(
+      date: selectedDate,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
