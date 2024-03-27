@@ -1,12 +1,16 @@
+import 'dart:async';
 import 'package:calendar_scheduler/model/schedule_model.dart';
 import 'package:calendar_scheduler/repository/auth_repository.dart';
 import 'package:calendar_scheduler/repository/schedule_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ScheduleProvider extends ChangeNotifier {
   final AuthRepository authRepository;
   final ScheduleRepository scheduleRepository; // ➊ API 요청 로직을 담은 클래스
+  static final storage = FlutterSecureStorage();// FlutterSecureStorage를 storage로 저장
+  static dynamic userInfo  = '';// storage에 있는 유저 정보를 저장
 
   String? accessToken;
   String? refreshToken;
@@ -22,19 +26,21 @@ class ScheduleProvider extends ChangeNotifier {
   ScheduleProvider({
     required this.scheduleRepository,
     required this.authRepository,
-  }) : super() {
-  }
+  }) : super();
+
 
   void getSchedules({
     required DateTime date,
   }) async {
-    final resp = await scheduleRepository.getSchedules(date: date,
-    //로그인을 해야 사용자와 관련된 일정 정보를 가져오는 getSchedules()함수를
+    final resp = await scheduleRepository.getSchedules(
+      date: date,
+      //로그인을 해야 사용자와 관련된 일정 정보를 가져오는 getSchedules()함수를
       //실행할 수 있는 화면으로 이동하므로 !를 붙여서 accessToken이 null이 아님을 명시
       accessToken: accessToken!,
     ); // GET 메서드 보내기
 
-    cache.update(date, (value) => resp, ifAbsent: () => resp); // ➊ 선택한 날짜의 일정들 업데이트하기
+    cache.update(date, (value) => resp,
+        ifAbsent: () => resp); // ➊ 선택한 날짜의 일정들 업데이트하기
 
     notifyListeners(); // ➋ Listening 하는 위젯들 업데이트하기
   }
@@ -109,8 +115,9 @@ class ScheduleProvider extends ChangeNotifier {
 
     try {
       await scheduleRepository.deleteSchedule(
-          id: id,
-           accessToken: accessToken!,); // ➊ 삭제함수 실행
+        id: id,
+        accessToken: accessToken!,
+      ); // ➊ 삭제함수 실행
     } catch (e) {
       cache.update(
         // ➋ 삭제 실패시 캐시 롤백하기
@@ -133,7 +140,6 @@ class ScheduleProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-
   //인증 - 토큰을 새로 받을 때
   updateTokens({
     String? refreshToken,
@@ -144,10 +150,9 @@ class ScheduleProvider extends ChangeNotifier {
       this.refreshToken = refreshToken;
     }
 
-    if (accessToken  != null) {
+    if (accessToken != null) {
       this.accessToken = accessToken;
     }
-
     notifyListeners();
   }
 
@@ -177,17 +182,26 @@ class ScheduleProvider extends ChangeNotifier {
       password: password,
     );
 
+    await storage.write(
+      key:'accessTokenKey', value: resp.accessToken
+    );
+    await storage.write(
+      key:'refreshTokenKey', value: resp.refreshToken
+    );
+
     updateTokens(
       refreshToken: resp.refreshToken,
       accessToken: resp.accessToken,
     );
   }
 
-  logout() {
+  logout() async {
+    await storage.delete(key: 'accessTokenKey');
+    await storage.delete(key: 'refreshTokenKey');
     //refreshToken과 accessToken을 null로 업데이트해 로그아웃 상태로 만든다
     refreshToken = null;
     accessToken = null;
-    //로그아웃과 동싱 ㅔ일정 정보 캐시 모두 삭제
+    //로그아웃과 동시에 일정 정보 캐시 모두 삭제
     cache = {};
     notifyListeners();
   }
@@ -198,11 +212,13 @@ class ScheduleProvider extends ChangeNotifier {
   }) async {
     //isRefreshToken이 true일 경우 refreshToken 재발급
     //false일 경우 accessToken 재발급
-    if(isRefreshToken) {
-      final token = await authRepository.rotateRefreshToken(refreshToken: refreshToken);
+    if (isRefreshToken) {
+      final token =
+          await authRepository.rotateRefreshToken(refreshToken: refreshToken);
       this.refreshToken = token;
     } else {
-      final token = await authRepository.rotateAccessToken(refreshToken: refreshToken);
+      final token =
+          await authRepository.rotateAccessToken(refreshToken: refreshToken);
 
       accessToken = token;
     }

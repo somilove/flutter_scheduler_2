@@ -7,7 +7,7 @@ class AuthRepository {
   //Dio 인스턴스 생성
   final _dio = Dio();
   //서버 주소
-  final _targetUrl = 'http://${Platform.isAndroid ? '10.0.2' :
+  final _targetUrl = 'http://${Platform.isAndroid ? '10.0.2.2' :
   'localhost'}:3000/auth';
 
   //회원가입 로직
@@ -49,11 +49,12 @@ class AuthRepository {
         },
       )
     );
-
+    print('***${result.statusCode}${result.data}****');
     //record 형태로 토큰을 반환
     return (refreshToken: result.data['refreshToken'] as String, accessToken: result.data['accessToken'] as String);
   }
 
+  //리프레시토큰 재발급 요청
   Future<String> rotateRefreshToken({
     required String refreshToken,
   }) async {
@@ -70,6 +71,7 @@ class AuthRepository {
     return result.data['refreshToken'] as String;
   }
 
+  //액세스토큰 재발급 요청
   Future<String> rotateAccessToken({
     required String refreshToken,
   }) async {

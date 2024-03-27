@@ -7,6 +7,10 @@ class ScheduleRepository {
   final _dio = Dio();
   final _targetUrl = 'http://${Platform.isAndroid ? '10.0.2.2' : 'localhost'}:3000/schedule';  // Android에서는 10.0.0.2가 localhost에 해당됩니다.
 
+  ScheduleRepository() {
+    _dio.interceptors.add(CustomInterceptor());
+  }
+
   Future<List<ScheduleModel>> getSchedules({
     required DateTime date,
     //함수를 실행할 때 액세스 토큰을 입력받는다
@@ -25,7 +29,6 @@ class ScheduleRepository {
         },
       ),
     );
-
     return resp.data  // ➋ 모델 인스턴스로 데이터 매핑하기
         .map<ScheduleModel>(
           (x) => ScheduleModel.fromJson(
@@ -67,5 +70,36 @@ class ScheduleRepository {
     );
 
     return resp.data?['id'];  // 삭제된 ID값 반환
+  }
+}
+
+
+class CustomInterceptor extends Interceptor {
+  // 1) 요청 보낼때
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    print('[REQ] [${options.method}] ${options.uri}');
+
+    return super.onRequest(options, handler);
+  }
+
+  // 2) 응답을 받을때
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    // TODO: implement onResponse
+    return super.onResponse(response, handler);
+  }
+
+  // 3) 에러가 났을때
+  @override
+  void onError(DioError err, ErrorInterceptorHandler handler) async {
+    // 401 에러가 날때 (status code)
+    // 토큰을 재발급 받는 시도를 한다.
+    // 토큰이 재발급되면, 다시 새로운 토큰으로 요청을 한다.
+    print('[ERR] [${err.requestOptions.method}] ${err.requestOptions.uri}');
+    // TODO: implement onError
+
+
+    return super.onError(err, handler);
   }
 }

@@ -44,7 +44,6 @@ class TodayBanner extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     provider.logout();
-
                     Navigator.of(context).pop();
                   },
                   child: const Icon(
