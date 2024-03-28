@@ -12,8 +12,8 @@ class ScheduleProvider extends ChangeNotifier {
   static final storage = FlutterSecureStorage();// FlutterSecureStorage를 storage로 저장
   static dynamic userInfo  = '';// storage에 있는 유저 정보를 저장
 
-  String? accessToken;
-  String? refreshToken;
+  // String? accessToken;
+  // String? refreshToken;
 
   DateTime selectedDate = DateTime.utc(
     // ➋ 선택한 날짜
@@ -32,6 +32,8 @@ class ScheduleProvider extends ChangeNotifier {
   void getSchedules({
     required DateTime date,
   }) async {
+    final accessToken = await storage.read(key: 'accessTokenKey');
+    print('accessToken');
     final resp = await scheduleRepository.getSchedules(
       date: date,
       //로그인을 해야 사용자와 관련된 일정 정보를 가져오는 getSchedules()함수를
@@ -48,6 +50,7 @@ class ScheduleProvider extends ChangeNotifier {
   void createSchedule({
     required ScheduleModel schedule,
   }) async {
+    final accessToken = await storage.read(key: 'accessTokenKey');
     final targetDate = schedule.date;
     final uuid = Uuid();
 
@@ -101,6 +104,7 @@ class ScheduleProvider extends ChangeNotifier {
     required DateTime date,
     required String id,
   }) async {
+    final accessToken = await storage.read(key: 'accessTokenKey');
     final targetSchedule = cache[date]!.firstWhere(
       (e) => e.id == id,
     ); // 삭제할 일정 기억
@@ -140,21 +144,21 @@ class ScheduleProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  //인증 - 토큰을 새로 받을 때
-  updateTokens({
-    String? refreshToken,
-    String? accessToken,
-  }) {
-    //refresgToken이 입력됐을 경우 refreshToken 업데이트
-    if (refreshToken != null) {
-      this.refreshToken = refreshToken;
-    }
-
-    if (accessToken != null) {
-      this.accessToken = accessToken;
-    }
-    notifyListeners();
-  }
+  // //인증 - 토큰을 새로 받을 때
+  // updateTokens({
+  //   String? refreshToken,
+  //   String? accessToken,
+  // }) {
+  //   //refresgToken이 입력됐을 경우 refreshToken 업데이트
+  //   if (refreshToken != null) {
+  //     this.refreshToken = refreshToken;
+  //   }
+  //
+  //   if (accessToken != null) {
+  //     this.accessToken = accessToken;
+  //   }
+  //   notifyListeners();
+  // }
 
   //회원가입 로직
   Future<void> register({
@@ -167,10 +171,17 @@ class ScheduleProvider extends ChangeNotifier {
       password: password,
     );
 
-    updateTokens(
-      refreshToken: resp.refreshToken,
-      accessToken: resp.accessToken,
+    await storage.write(
+        key:'accessTokenKey', value: resp.accessToken
     );
+    await storage.write(
+        key:'refreshTokenKey', value: resp.refreshToken
+    );
+
+    // updateTokens(
+    //   refreshToken: resp.refreshToken,
+    //   accessToken: resp.accessToken,
+    // );
   }
 
   Future<void> login({
@@ -189,40 +200,42 @@ class ScheduleProvider extends ChangeNotifier {
       key:'refreshTokenKey', value: resp.refreshToken
     );
 
-    updateTokens(
-      refreshToken: resp.refreshToken,
-      accessToken: resp.accessToken,
-    );
+    // updateTokens(
+    //   refreshToken: resp.refreshToken,
+    //   accessToken: resp.accessToken,
+    // );
   }
 
   logout() async {
     await storage.delete(key: 'accessTokenKey');
     await storage.delete(key: 'refreshTokenKey');
     //refreshToken과 accessToken을 null로 업데이트해 로그아웃 상태로 만든다
-    refreshToken = null;
-    accessToken = null;
+    // refreshToken = null;
+    // accessToken = null;
     //로그아웃과 동시에 일정 정보 캐시 모두 삭제
     cache = {};
     notifyListeners();
   }
 
-  rotateToken({
-    required String refreshToken,
-    required bool isRefreshToken,
-  }) async {
-    //isRefreshToken이 true일 경우 refreshToken 재발급
-    //false일 경우 accessToken 재발급
-    if (isRefreshToken) {
-      final token =
-          await authRepository.rotateRefreshToken(refreshToken: refreshToken);
-      this.refreshToken = token;
-    } else {
-      final token =
-          await authRepository.rotateAccessToken(refreshToken: refreshToken);
-
-      accessToken = token;
-    }
-
-    notifyListeners();
-  }
+  // rotateToken({
+  //   required String refreshToken,
+  //   required bool isRefreshToken,
+  // }) async {
+  //   //isRefreshToken이 true일 경우 refreshToken 재발급
+  //   //false일 경우 accessToken 재발급
+  //   if (isRefreshToken) {
+  //     final token =
+  //         await authRepository.rotateRefreshToken(refreshToken: refreshToken);
+  //     this.refreshToken = token;
+  //   } else {
+  //     final token =
+  //         await authRepository.rotateAccessToken(refreshToken: refreshToken);
+  //
+  //     accessToken = token;
+  //   }
+  //
+  //   notifyListeners();
+  // }
 }
+
+
