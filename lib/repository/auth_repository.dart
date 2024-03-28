@@ -13,10 +13,6 @@ class AuthRepository {
   final _targetUrl = 'http://${Platform.isAndroid ? '10.0.2.2' :
   'localhost'}:3000/auth';
 
-  // AuthRepository() {
-  //   _dio.interceptors.add(CustomInterceptor());
-  // }
-
 
   //회원가입 로직
   Future<({String refreshToken, String accessToken})> register({
