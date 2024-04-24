@@ -51,7 +51,7 @@ class ScheduleProvider extends ChangeNotifier {
     final targetDate = schedule.date;
     final uuid = Uuid();
 
-    final tempId = uuid.v4(); // 유일무이한 ID값을 생성합니다.
+    final tempId = uuid.v4();
     final newSchedule = schedule.copyWith(
       id: tempId,
     );
@@ -62,7 +62,7 @@ class ScheduleProvider extends ChangeNotifier {
         ...value,
         newSchedule,
       ]..sort(
-          (a, b) => a.startTime.compareTo(
+          (a, b) => a.startTime.compareTo (
             b.startTime,
           ),
         ),
@@ -75,7 +75,7 @@ class ScheduleProvider extends ChangeNotifier {
       final savedSchedule = await scheduleRepository.createSchedule(
         schedule: schedule,
         accessToken: accessToken!,
-      ); // API 요청을 합니다.
+      );
 
       cache.update(
         // ➊ 서버 응답 기반으로 캐시 업데이트

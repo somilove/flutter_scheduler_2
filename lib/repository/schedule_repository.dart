@@ -52,7 +52,6 @@ class ScheduleRepository {
         },
       ),
     );
-
     return resp.data?['id'];
   }
 
@@ -83,7 +82,7 @@ class CustomInterceptor extends Interceptor {
     print('[REQ] [${options.method}] ${options.uri}');
 
     if(options.headers['accessToken'] =='true') {
-      //헤더 삭제
+      //헤더 삭제 (실제 요청 시 불필요한 HTTP 헤더 없애기)
       options.headers.remove('accessToken');
       final token = await ScheduleProvider.storage.read(key: 'accessTokenKey');
 
@@ -113,11 +112,11 @@ class CustomInterceptor extends Interceptor {
 
   // 3) 에러가 났을때
   @override
-  void onError(DioError err, ErrorInterceptorHandler handler) async {
+  void onError(DioError err, ErrorInterceptorHandler handler ) async {
     // 401 에러가 날때 (status code)
     // 토큰을 재발급 받는 시도를 한다.
     // 토큰이 재발급되면, 다시 새로운 토큰으로 요청을 한다.
-    print('******************[ERR] [${err.requestOptions.method}] ${err.requestOptions.uri}**********************************');
+    print('******************[ERR] [${err.requestOptions.method}] ${err.requestOptions.uri}**************** ******************');
     print(err.response!.statusCode);
     print(err.requestOptions!.path);
     final refreshToken = await ScheduleProvider.storage.read(key: 'refreshTokenKey');
@@ -140,7 +139,7 @@ class CustomInterceptor extends Interceptor {
         final dio = Dio();
         //기존의 Dio 인스턴스가 아닌
         //DioInterceptor 안에서 새로운 Dio 인스턴스를 생성하여 HTTP Request를 보내는 이유
-        //기존의 Dio 인스턴스에 추가할 Interceptor를 구현했는데 기존의 Dio 인스턴스를 그대로 재사용할 경우 다시 onError에 빠지는 순환오류(무한루프)가 발생하기 때문!
+        //기존의 Dio 인스턴스에 추가할 Interceptor를 구현했는데 기존의 Dio 인스턴스를 그대로 재사용할 경우 다시 onError에 빠지는 순환오류(무한루프)가 발 ㅡ   생하기 때문!
         // final accessToken = rotateToken(refreshToken: refreshToken, isRefreshToken: isPathRefresh);
         final accessToken = await AuthRepository().rotateAccessToken(refreshToken: refreshToken,dio: dio);
         final options = err.requestOptions;

@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'package:calendar_scheduler/provider/schedule_provider.dart';
-import 'package:calendar_scheduler/repository/schedule_repository.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
 
